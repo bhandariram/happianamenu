@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Happiana Menu</title>
+
+<style>
+:root{ --primary:#2e7d32; }
+
+body{ margin:0; font-family:Arial; background:#f4f4f4; }
+
+header{
+    background:var(--primary);
+    color:white;
+    text-align:center;
+    padding:15px;
+}
+
+#search{
+    width:90%;
+    padding:10px;
+    margin-top:10px;
+    border:none;
+    border-radius:6px;
+}
+
+#categories{
+    display:flex;
+    overflow-x:auto;
+    background:white;
+}
+
+#categories button{
+    padding:12px;
+    border:none;
+    background:none;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+#categories button.active{
+    color:var(--primary);
+    border-bottom:3px solid var(--primary);
+}
+
+.menu-item{
+    background:white;
+    margin:10px;
+    padding:12px;
+    border-radius:8px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.add-btn{
+    background:var(--primary);
+    color:white;
+    border:none;
+    padding:6px 10px;
+    border-radius:4px;
+}
+
+/* CART BUTTON */
+#cartToggle{
+    position:fixed;
+    bottom:20px;
+    right:20px;
+    background:var(--primary);
+    color:white;
+    width:60px;
+    height:60px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:24px;
+    cursor:pointer;
+}
+
+.logo{
+    height:100px;
+}
+
+/* CART PANEL */
+.cart{
+    position:fixed;
+    bottom:-100%;
+    left:0;
+    width:100%;
+    height:65%;
+    background:white;
+    border-radius:20px 20px 0 0;
+    box-shadow:0 -3px 15px rgba(0,0,0,0.2);
+    padding:15px;
+    transition:0.4s;
+    overflow:auto;
+}
+
+.cart.active{ bottom:0; }
+
+.qty-btn{ margin:0 4px; }
+
+.checkout-btn{
+    width:100%;
+    padding:12px;
+    background:#25D366;
+    color:white;
+    border:none;
+    margin-top:10px;
+    border-radius:6px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<img src="happianalogo.png" class="logo">
+<h2>Happiana Menu</h2>
+<input type="text" id="search" placeholder="Search food...">
+</header>
+
+<div id="categories"></div>
+<div id="menu"></div>
+
+<div id="cartPanel" class="cart">
+<h3>Your Cart</h3>
+<div id="cartItems"></div>
+<h4>Total: Rs <span id="total">0</span></h4>
+
+<select id="paymentMethod" style="width:100%;padding:8px;margin-top:10px">
+<option value="whatsapp">WhatsApp Order</option>
+<option value="khalti">Khalti (Demo)</option>
+<option value="esewa">eSewa (Demo)</option>
+</select>
+
+<button class="checkout-btn" onclick="checkout()">Proceed</button>
+</div>
+
+<div id="cartToggle" onclick="toggleCart()">🛒</div>
+
+<script>
+
+const phone="977981234567";
+
+/* FULL MENU DATA FROM PDF */
+const menuData={
+
+"Breakfast":[
+{name:"Chana, Egg, Roti, Seasonal Fruits",price:190}
+],
+
+"Hot Drinks":[
+{name:"Black Tea",price:30},
+{name:"Milk Tea",price:50},
+{name:"Lemon Tea",price:40},
+{name:"Hot Lemon with Honey & Ginger",price:120},
+{name:"Black Coffee",price:50},
+{name:"Milk Coffee",price:90}
+],
+
+"Soft Drinks":[
+{name:"Coke/Fanta/Sprite/Dew",price:90},
+{name:"Real Juice",price:150},
+{name:"Redbull/X-tream",price:180},
+{name:"Water Bottle",price:30},
+{name:"Jumbo (Soft Drinks)",price:400},
+{name:"Fresh Lemon Soda",price:100}
+],
+
+"Thukpa":[
+{name:"Veg Thukpa",price:160},
+{name:"Chicken Thukpa",price:190},
+{name:"Buff Thukpa",price:190},
+{name:"Egg Thukpa",price:180},
+{name:"Mix Thukpa",price:240},
+{name:"Thenduk",price:240}
+],
+
+"Chowmein":[
+{name:"Veg Chowmein",price:150},
+{name:"Chicken Chowmein",price:175},
+{name:"Buff Chowmein",price:185},
+{name:"Egg Chowmein",price:190},
+{name:"Mixed Chowmein",price:240}
+],
+
+"Veg Snacks":[
+{name:"French Fries",price:150},
+{name:"Veg Pakauda",price:150},
+{name:"Mustang Aalu",price:160},
+{name:"Chips Chilly",price:170},
+{name:"Peanuts Sadheko",price:130},
+{name:"Bhatmas Sadheko",price:130},
+{name:"Aalu Sadheko",price:140},
+{name:"Wai Wai Sadheko",price:100},
+{name:"Mushroom Chilly",price:240},
+{name:"Panner Pakauda",price:250},
+{name:"Onion Pakauda",price:160},
+{name:"Mix Veg Boiled",price:140},
+{name:"Masala/Plain Papad (2 pcs)",price:80},
+{name:"Green Nepali Salad",price:140},
+{name:"Mixed Seasonal Fruit Salad",price:240}
+],
+
+"Momo":[
+{name:"Chicken Fried",price:195},
+{name:"Buff Fried",price:195},
+{name:"Veg Fried",price:170},
+{name:"Chicken Steam",price:180},
+{name:"Buff Steam",price:180},
+{name:"Veg Steam",price:150},
+{name:"C Momo",price:210}
+],
+
+"Fried Rice":[
+{name:"Chicken Fry Rice",price:200},
+{name:"Veg Fry Rice",price:170},
+{name:"Egg Fry Rice",price:180},
+{name:"Buff Fry Rice",price:200},
+{name:"Mix Fry Rice",price:240}
+],
+
+"Non-Veg Snacks":[
+{name:"Chicken Chilli",price:295},
+{name:"Buff Chilli",price:280},
+{name:"Pork Chilli",price:300},
+{name:"Sausage Chilli",price:250},
+{name:"Chicken Lollipop",price:290},
+{name:"Sausage (4 pcs)",price:200}
+],
+
+"Soup":[
+{name:"Chicken Soup",price:190},
+{name:"Veg Soup",price:150},
+{name:"Mushroom Soup",price:180},
+{name:"Hot & Sour Soup",price:190}
+],
+
+"Sekuwa":[
+{name:"Chicken Sekuwa (200gm)",price:300},
+{name:"Buff Sekuwa (200gm)",price:350},
+{name:"Mutton Sekuwa (200gm)",price:500},
+{name:"Pork Sekuwa (200gm)",price:380}
+],
+
+"Nepali Khana Set":[
+{name:"Veg Khana Set",price:290},
+{name:"Mutton Khana Set",price:610},
+{name:"Chicken Khana Set",price:470},
+{name:"Buff Khana Set",price:430},
+{name:"Pork Khana Set",price:590}
+],
+
+"Khaja Set":[
+{name:"Veg Khaja Set",price:220},
+{name:"Bhuttan (Khasi) Khaja Set",price:450},
+{name:"Mutton Khaja Set",price:550},
+{name:"Chicken Khaja Set",price:350},
+{name:"Pork Khaja Set",price:370},
+{name:"Buff Khaja Set",price:360}
+],
+
+"Choila":[
+{name:"Chicken Choila",price:260},
+{name:"Buff Choila",price:260},
+{name:"Mushroom Choila",price:240}
+],
+
+"Beer":[
+{name:"Tuborg",price:550},
+{name:"Gorkha Strong",price:490},
+{name:"Barahsinghe",price:550}
+],
+
+"Cigarettes":[
+{name:"Surya Red (Per Piece)",price:30},
+{name:"Surya White (Per Piece)",price:30},
+{name:"Shikhar Ice (Per Piece)",price:25},
+{name:"Surya (Per Packet)",price:500},
+{name:"Shikhar Ice (Per Packet)",price:400}
+],
+
+"Wine (Bottle)":[
+{name:"Big Master",price:1500},
+{name:"Divine",price:1400},
+{name:"Pataleban",price:1700}
+]
+
+};
+
+let cart=[];
+let currentCategory=Object.keys(menuData)[0];
+
+function loadCategories(){
+let c=document.getElementById("categories");
+Object.keys(menuData).forEach(cat=>{
+let b=document.createElement("button");
+b.innerText=cat;
+b.onclick=()=>showCategory(cat,b);
+c.appendChild(b);
+});
+}
+
+function showCategory(cat,btn){
+currentCategory=cat;
+document.querySelectorAll("#categories button").forEach(b=>b.classList.remove("active"));
+btn.classList.add("active");
+renderMenu();
+}
+
+function renderMenu(){
+let m=document.getElementById("menu");
+m.innerHTML="";
+menuData[currentCategory].forEach(item=>{
+m.innerHTML+=`
+<div class="menu-item">
+<span>${item.name} - Rs ${item.price}</span>
+<button class="add-btn" onclick="addToCart('${item.name}',${item.price})">Add</button>
+</div>`;
+});
+}
+
+function addToCart(name,price){
+let e=cart.find(i=>i.name===name);
+if(e){e.qty++;} else{cart.push({name,price,qty:1});}
+updateCart();
+}
+
+function updateCart(){
+let c=document.getElementById("cartItems");
+c.innerHTML="";
+let total=0;
+cart.forEach(i=>{
+total+=i.price*i.qty;
+c.innerHTML+=`${i.name} x ${i.qty}<br>`;
+});
+document.getElementById("total").innerText=total;
+}
+
+function toggleCart(){
+document.getElementById("cartPanel").classList.toggle("active");
+}
+
+function checkout(){
+if(cart.length===0)return alert("Cart empty");
+let total=document.getElementById("total").innerText;
+let msg="Hello Happiana,%0AOrder:%0A";
+cart.forEach(i=>msg+=`${i.name} x ${i.qty}%0A`);
+msg+=`Total: Rs ${total}`;
+window.open(`https://wa.me/${phone}?text=${msg}`);
+}
+
+document.getElementById("search").addEventListener("keyup",function(){
+let v=this.value.toLowerCase();
+document.querySelectorAll(".menu-item").forEach(i=>{
+i.style.display=i.innerText.toLowerCase().includes(v)?"flex":"none";
+});
+});
+
+loadCategories();
+showCategory(currentCategory,document.querySelector("#categories button"));
+
+</script>
+</body>
+</html>
