@@ -31,18 +31,31 @@ header{
     background:white;
 }
 
+/* CATEGORY GRID - MOBILE FIT */
+#categories{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);   /* 3 per row */
+    gap:6px;
+    padding:8px;
+    background:white;
+}
+
 #categories button{
-    padding:12px;
+    padding:8px 5px;
+    font-size:11px;
     border:none;
-    background:none;
-    font-weight:bold;
-    cursor:pointer;
+    border-radius:6px;
+    background:#eee;
+    text-align:center;
+    line-height:1.2;
+    white-space:normal;   /* allow text wrap */
 }
 
 #categories button.active{
-    color:var(--primary);
-    border-bottom:3px solid var(--primary);
+    background:var(--primary);
+    color:white;
 }
+
 
 .menu-item{
     background:white;
@@ -366,6 +379,7 @@ showCategory(currentCategory,document.querySelector("#categories button"));
 </script>
 </body>
 </html>
+
 
 
 
